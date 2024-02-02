@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model client {
+  IdClient   Int      @id @unique(map: "IdClient_UNIQUE") @default(autoincrement())
+  ClientName String   @db.VarChar(255)
+  studies    studies[]
+}
+
+model filehistory {
+  idFileHistory      Int      @unique(map: "idFileHistory_UNIQUE") @default(autoincrement())
+  FileName           String   @db.VarChar(255)
+  FileType           String   @db.VarChar(255)
+  FileContent        Bytes
+  UploadDate         DateTime @db.DateTime(0)
+  FileSize           BigInt
+  modificationNumber Int
+  modificationDate   DateTime @db.DateTime(0)
+  Studies_IdStudies  Int
+  Users_UserID       Int
+  studies            studies  @relation(fields: [Studies_IdStudies], references: [IdStudies], onDelete: NoAction, onUpdate: NoAction, map: "fk_FileHistory_Studies1")
+  users              users    @relation(fields: [Users_UserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction, map: "fk_FileHistory_Users1")
+
+  @@id([idFileHistory, Studies_IdStudies])
+  @@index([Studies_IdStudies], map: "fk_FileHistory_Studies1_idx")
+  @@index([Users_UserID], map: "fk_FileHistory_Users1_idx")
+}
+
+model files {
+  idFiles           Int           @unique(map: "idFiles_UNIQUE") @default(autoincrement()) 
+  FileName          String        @db.VarChar(255)
+  FileType          String        @db.VarChar(255)
+  FileContent       Bytes
+  uploadDate        DateTime      @db.DateTime(0)
+  FileSize          BigInt
+  Studies_IdStudies Int
+  studies           studies       @relation(fields: [Studies_IdStudies], references: [IdStudies], onDelete: NoAction, onUpdate: NoAction, map: "fk_Files_Studies1")
+
+  @@id([idFiles, Studies_IdStudies])
+  @@index([Studies_IdStudies], map: "fk_Files_Studies1_idx")
+}
+
+model studies {
+  IdStudies         Int                     @unique(map: "idStudies_UNIQUE") @default(autoincrement())
+  Client_IdClient   Int                     
+  DateDeReception   DateTime                @db.DateTime(0)
+  DateDeSoumission  DateTime                @db.DateTime(0)
+  FullName          String                  @db.VarChar(255)
+  Factured          Int                     @default(0) @db.TinyInt
+  TypeEtude         studies_TypeEtude
+  NomberDeRetouche  Int?
+  Status            studies_Status          @default(toDo)
+  TypeDeRetouche    studies_TypeDeRetouche?
+  Category          studies_Category
+  Nature            studies_Nature
+  files             files[]
+  filehistory       filehistory[]
+  notifications     Notification[]
+  client            client                  @relation(fields: [Client_IdClient], references: [IdClient], onDelete: NoAction, onUpdate: NoAction, map: "fk_Studies_Client1")
+  users_has_studies users_has_studies[]
+
+  @@id([IdStudies, Client_IdClient])
+  @@index([Client_IdClient], map: "fk_Studies_Client1_idx")
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  userId     Int      // Foreign key for users model
+  studyId    Int?     // Optional foreign key for studies model, if notifications are study-specific
+  seen       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user       users    @relation(fields: [userId], references: [UserID])
+  study      studies? @relation(fields: [studyId], references: [IdStudies])
+
+  @@index([userId], name: "idx_notifications_userId")
+  @@index([studyId], name: "idx_notifications_studyId")
+}
+
+model users {
+  UserID            Int                 @id @unique(map: "UserID_UNIQUE") @default(autoincrement())
+ Email    String @unique(map: "Email_UNIQUE") @db.VarChar(200) 
+  Password String @db.LongText
+  Role     users_Role
+  Token    String? @db.LongText
+  FullName          String?              @db.VarChar(255)
+  PhoneNumber       String?              @db.VarChar(255)
+  Avatar            String?              @db.VarChar(255)
+  filehistory       filehistory[]
+  users_has_studies users_has_studies[]
+  notifications     Notification[]
+}
+
+model users_has_studies {
+  Users_UserID      Int
+  Studies_IdStudies Int
+  studies           studies @relation(fields: [Studies_IdStudies], references: [IdStudies], onDelete: NoAction, onUpdate: NoAction, map: "fk_Users_has_Studies_Studies1")
+  users             users   @relation(fields: [Users_UserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction, map: "fk_Users_has_Studies_Users1")
+
+  @@id([Users_UserID, Studies_IdStudies])
+  @@index([Studies_IdStudies], map: "fk_Users_has_Studies_Studies1_idx")
+  @@index([Users_UserID], map: "fk_Users_has_Studies_Users1_idx")
+}
+enum studies_Status {
+  toDo
+  inProgress
+  Done
+  ManqueInformation 
+}
+
+enum users_Role {
+  ADMIN
+  ASSISTANT
+  ENGINEER
+}
+
+enum studies_TypeEtude {
+  NouvelleEtude
+  Retouche
+}
+
+enum studies_TypeDeRetouche {
+  Exterieur
+  Interieur
+}
+
+enum studies_Category {
+  Classique
+  Precaire
+  GrandPrecaire
+}
+
+enum studies_Nature {
+  Normale
+  Prioritere
+}
