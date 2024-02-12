@@ -39,6 +39,7 @@ model files {
   FileContent       Bytes
   uploadDate        DateTime      @db.DateTime(0)
   FileSize          BigInt
+  isSynthese        Boolean       @default(false)
   Studies_IdStudies Int
   studies           studies       @relation(fields: [Studies_IdStudies], references: [IdStudies], onDelete: NoAction, onUpdate: NoAction, map: "fk_Files_Studies1")
 
@@ -48,7 +49,8 @@ model files {
 
 model studies {
   IdStudies         Int                     @unique(map: "idStudies_UNIQUE") @default(autoincrement())
-  Client_IdClient   Int                     
+  Client_IdClient   Int 
+  CreatedBy         Int?                    
   DateDeReception   DateTime                @db.DateTime(0)
   DateDeSoumission  DateTime                @db.DateTime(0)
   FullName          String                  @db.VarChar(255)
@@ -62,6 +64,8 @@ model studies {
   files             files[]
   filehistory       filehistory[]
   notifications     Notification[]
+  createdAt         DateTime                @default(now())
+  createdByUser     users?                   @relation("CreatedByUser", fields: [CreatedBy], references: [UserID])
   client            client                  @relation(fields: [Client_IdClient], references: [IdClient], onDelete: NoAction, onUpdate: NoAction, map: "fk_Studies_Client1")
   users_has_studies users_has_studies[]
 
@@ -85,14 +89,15 @@ model Notification {
 
 model users {
   UserID            Int                 @id @unique(map: "UserID_UNIQUE") @default(autoincrement())
- Email    String @unique(map: "Email_UNIQUE") @db.VarChar(200) 
-  Password String @db.LongText
-  Role     users_Role
-  Token    String? @db.LongText
+  Password          String              @db.LongText
+ Email              String              @unique(map: "Email_UNIQUE") @db.VarChar(200) 
+  Role              users_Role
+  Token             String?              @db.LongText
   FullName          String?              @db.VarChar(255)
   PhoneNumber       String?              @db.VarChar(255)
   Avatar            String?              @db.VarChar(255)
   filehistory       filehistory[]
+  createdStudies    studies[]           @relation("CreatedByUser")
   users_has_studies users_has_studies[]
   notifications     Notification[]
 }

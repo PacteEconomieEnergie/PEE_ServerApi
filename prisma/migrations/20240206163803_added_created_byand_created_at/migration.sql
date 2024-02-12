@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE `studies` ADD COLUMN `CreatedBy` INTEGER NULL,
+    ADD COLUMN `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
+
+-- AddForeignKey
+ALTER TABLE `studies` ADD CONSTRAINT `studies_CreatedBy_fkey` FOREIGN KEY (`CreatedBy`) REFERENCES `users`(`UserID`) ON DELETE SET NULL ON UPDATE CASCADE;
