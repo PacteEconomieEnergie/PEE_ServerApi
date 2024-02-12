@@ -12,4 +12,4 @@ router.post('/:studyId/uploadSyntheseFile',uploadSyntheseFile)
 
 
 
-module.exports=router
+export default router;

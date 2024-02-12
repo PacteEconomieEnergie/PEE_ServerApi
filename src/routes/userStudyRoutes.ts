@@ -9,4 +9,4 @@ router.get("/studies/:studyId",getStudyUsers)
 
 
 
-module.exports=router
+export default router;  

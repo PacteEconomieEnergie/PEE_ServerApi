@@ -54,7 +54,7 @@ app.get("/api/download/:fileId",async (req:any,res:any)=>{
       }
 })
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3003;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
