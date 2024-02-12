@@ -58,7 +58,7 @@ async  function login (req: Request, res: Response) {
             const user = await prisma.users.findUnique({
                 where: { Email }
             })
-           console.log(user);
+           
 
 if (!user) {
     return res.status(401).json({ error: 'Email or password is incorrect' });
