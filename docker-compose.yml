@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+  
+    image: pee_server:latest # Replace with your Docker image name and tag
+    
+    ports:
+      - "3003:3002" # Map port 3002 on the host to port 3002 in the container
+    environment:
+      DATABASE_URL: "mysql://root:A09631731%3F@db:3306/assorcall" # Adjusted for Docker networking
+      JWT_SECRET: "AssorCall-PEE-2023"
+      expiresIn: "1w"
+    depends_on:
+      - db # Ensures that the db service is started before the app service
+      # Adding a simple command override for debugging purposes; comment this out in production
+    # command: tail -f /dev/null
+    # Adding a basic healthcheck
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: mysql:8.0 # Or the version you prefer, ensure compatibility with your app
+    environment:
+      MYSQL_ROOT_PASSWORD: "A09631731?" # Use your desired root password
+      MYSQL_DATABASE: assorcall # The database name your app will use
+    ports:
+      - "3307:3306" # Optional: Expose MySQL on port 3306 on the host for direct access
+    volumes:
+      - mysql-data:/var/lib/mysql # Persist database data
+
+volumes:
+  mysql-data: # Defines a volume for persisting database data across container restarts

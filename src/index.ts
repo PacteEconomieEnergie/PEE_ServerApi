@@ -119,12 +119,13 @@
 import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
-import { setupSocketIO } from './src/socketManager'; // Adjust the path as necessary
-import clientRoutes from './src/routes/clientRoutes';
-import notificationRoutes from './src/routes/notificationRoutes';
-const userRoutes=require('./src/routes/userRoutes.ts')
-const studyRoutes =require('./src/routes/studyRoutes.ts')
-const  userStudiesRoutes =require( "./src/routes/userStudyRoutes.ts")
+import { setupSocketIO } from './socketManager'; // Adjust the path as necessary
+import clientRoutes from './routes/clientRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import userRoutes from "./routes/userRoutes"
+import studyRoutes from './routes/studyRoutes'
+import userStudiesRoutes  from './routes/userStudyRoutes'
+
 
 const app = express();
 const server = createServer(app);
@@ -150,7 +151,7 @@ app.get("/api/download/:fileId", async (req, res) => {
   // Implementation remains the same as your provided example
 });
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3003;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

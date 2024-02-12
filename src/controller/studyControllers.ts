@@ -2,7 +2,7 @@ import { PrismaClient, Prisma, studies } from '@prisma/client';
 import { Request, Response } from 'express';
 import { uploadFile } from "../middelware/multerSetup"
 import multer, { MulterError } from 'multer';
-import { io,users} from '../../index';
+import { io,users} from '../index';
 import { Socket } from 'socket.io';
 const prisma = new PrismaClient();
 
