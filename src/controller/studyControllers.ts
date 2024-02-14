@@ -330,7 +330,8 @@ const updatedStudyStatus=async (req: Request, res: Response)=>{
                 data:{
                     Status:Status
                 },
-                include: { createdByUser: {select: {
+                include: { 
+                    createdByUser: {select: {
                     UserID: true,
                     FullName: true,
                     Role: true,

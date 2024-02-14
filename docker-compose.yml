@@ -3,7 +3,7 @@ version: '3.8'
 services:
   app:
   
-    image: pee_server:latest # Replace with your Docker image name and tag
+    image: azizmenzli/pee_server:latestv1 # Replace with your Docker image name and tag
     
     ports:
       - "3003:3002" # Map port 3002 on the host to port 3002 in the container
@@ -31,6 +31,15 @@ services:
       - "3307:3306" # Optional: Expose MySQL on port 3306 on the host for direct access
     volumes:
       - mysql-data:/var/lib/mysql # Persist database data
+  
+  client: # Client application
+    image: azizmenzli/assorcall:frontApp
+    ports:
+      - "8080:3000"
+    depends_on:
+      - app
+    environment:
+      REACT_APP_SERVER_URL: "http://192.168.1.244:3003"
 
 volumes:
   mysql-data: # Defines a volume for persisting database data across container restarts

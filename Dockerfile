@@ -38,8 +38,12 @@ COPY --from=builder /app/node_modules ./node_modules
 # Copy the generated JavaScript files
 COPY --from=builder /app/src ./src
 
+# Copy the entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Expose the port the app runs on
 EXPOSE 3002
 
 # Define the command to start the app using the compiled JavaScript
-CMD ["node", "src/index.js"]
+ENTRYPOINT ["/entrypoint.sh"]

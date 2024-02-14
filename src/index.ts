@@ -2,12 +2,15 @@ import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import { PrismaClient, Prisma } from '@prisma/client';
-import { setupSocketIO } from './src/socketManager'; // Adjust the path as necessary
-import clientRoutes from './src/routes/clientRoutes';
-import notificationRoutes from './src/routes/notificationRoutes';
-const userRoutes=require('./src/routes/userRoutes.ts')
-const studyRoutes =require('./src/routes/studyRoutes.ts')
-const  userStudiesRoutes =require( "./src/routes/userStudyRoutes.ts")
+import { setupSocketIO } from './socketManager'; // Adjust the path as necessary
+import clientRoutes from './routes/clientRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+// const userRoutes=require('./src/routes/userRoutes.ts')
+import userRoutes from './routes/userRoutes'
+// const studyRoutes =require('./src/routes/studyRoutes.ts')
+import studyRoutes from "./routes/studyRoutes"
+// const  userStudiesRoutes =require( "./src/routes/userStudyRoutes.ts")
+import userStudiesRoutes from './routes/userStudyRoutes'
 const prisma= new PrismaClient()
 const app = express();
 const server = createServer(app);
@@ -19,10 +22,10 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); 
 
 // Setup your routes
-app.use("/clients", clientRoutes);
+app.use("/clients", clientRoutes);  
 app.use("/users", userRoutes);
 app.use("/studies", studyRoutes);
 app.use("/userStudy", userStudiesRoutes);
@@ -54,7 +57,7 @@ app.get("/api/download/:fileId",async (req:any,res:any)=>{
       }
 })
 
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 3002;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
