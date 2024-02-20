@@ -1,15 +1,22 @@
-import express from 'express'
-import { addModification, addStudy, getAllStudies,getStudyById,updatedStudyStatus,uploadSyntheseFile } from '../controller/studyControllers'
+// src/routes/studyRoutes.ts
 
-const router=express.Router()
+import express from 'express';
+import { StudyManagementController } from '../controller/studyControllers';
+import { uploadFile } from '../middleware/multerSetup'; // Adjusted import path as needed
 
-router.post('/add/:clientId/:userId/:createdById',addStudy)
-router.put('/add/:IdStudies/:UserID',addModification)
-router.get("/",getAllStudies)
-router.get("/:userId",getStudyById)
-router.patch("/:studyId",updatedStudyStatus)
-router.post('/:studyId/uploadSyntheseFile',uploadSyntheseFile)
+const router = express.Router();
+const studyController = new StudyManagementController();
 
+// Applying the file upload middleware to routes that require file processing
+router.post('/add/:clientId/:userId/:createdById', uploadFile, studyController.addStudy);
+// router.post('/:studyId/uploadSyntheseFile', uploadFile, (req, res) => studyController.uploadSyntheseFile(req, res));
 
-
+// Other routes do not need file processing, so they are not using the uploadFile middleware
+// router.put('/modify/:IdStudies/:UserID', (req, res) => studyController.addModification(req, res));
+router.get("/", studyController.getAllStudies);
+router.get('/engineers', studyController.getEngineersStudies);
+router.get('/:userId', studyController.getStudyById);
+router.patch("/:studyId",  uploadFile,studyController.uploadSyntheseFile);
+router.patch('/:studyId/:userId/status',studyController.updateStudyStatus)
+router.post('/:studyId/:userId', uploadFile, studyController.addModification);
 export default router;

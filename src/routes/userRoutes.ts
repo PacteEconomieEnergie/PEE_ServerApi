@@ -1,6 +1,6 @@
 import express from "express"
 import { addUser,getAllUsers, login,getUserByEmail,getUserById,getAllEngineers } from "../controller/userControllers"
-import { userValidationRules,loginValidationRules,validate } from "../middelware/userValidatore"
+import { userValidationRules,loginValidationRules,validate } from "../middleware/userValidatore"
 
 const router=express.Router()
 
@@ -9,8 +9,8 @@ router.post("/login",loginValidationRules(),validate,login)
 router.get('/',getAllUsers)
 router.get('/email/:Email', getUserByEmail);
 router.get('/id/:id', getUserById);
-router.get("/engineers",getAllEngineers)
-
+router.get("/engineers",getAllEngineers)  
+  
 
 
 
