@@ -102,12 +102,13 @@ export class StudyManagementController {
     }
   };
   public updateStudyStatus = async (req: Request, res: Response): Promise<void> => {
-    const { studyId, userId } = req.params;
-    const { status } = req.body;
+    const { studyId } = req.params;
+    const { Status } = req.body;
  // Assuming you have middleware to set userId from token
+console.log(req.body,"the body");
 
     try {
-      const updatedStudy = await this.studyService.updateStudyStatus(parseInt(studyId), status as StudiesStatus, userId);
+      const updatedStudy = await this.studyService.updateStudyStatus(parseInt(studyId), Status as StudiesStatus);
       res.json({
         message: 'Study status updated successfully',
         data: updatedStudy
@@ -123,7 +124,7 @@ export class StudyManagementController {
     const { TypeDeRetouche, additionalRetouch } = req.body; // Parse additionalRetouch from the request body
 
     try {
-        const result = await this.studyService.addModification(
+        const result = await this.studyService.addModification( 
             parseInt(studyId),
             file,
             parseInt(userId),

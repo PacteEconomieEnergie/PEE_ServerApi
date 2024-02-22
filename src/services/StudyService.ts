@@ -167,11 +167,13 @@ export class StudyService {
             Role: 'ENGINEER',
           },
           include: {
+            
             users_has_studies: {
               include: {
                 studies: {
                   include: {
-                    files: true, // Include files information if needed
+                    files: true,
+                    client:true // Include files information if needed
                   }
                 }
               }
@@ -194,7 +196,10 @@ export class StudyService {
             id: engineer.UserID,
             name: engineer.FullName || 'Unnamed Engineer',
             photo: engineer.Avatar || "/default/path/to/avatar.svg", // Adjust as necessary
-            tasks: studies.map(study => ({ status: study.Status })),
+            tasks: studies.map(study => ({ IdStudy: study.IdStudies, type: study.TypeEtude, Status: study.Status,client: {
+              id: study.client.IdClient,
+              name: study.client.ClientName,
+            },})),
             studiesReceived,
             studiesCompleted,
             studiesInProgress,
@@ -209,7 +214,7 @@ export class StudyService {
       }
     }
       
-    public async updateStudyStatus(studyId: number, status: StudiesStatus, userId: string): Promise<any> {
+    public async updateStudyStatus(studyId: number, status: StudiesStatus): Promise<any> {
       if (!Object.values(StudiesStatus).includes(status)) {
         throw new Error("Invalid status value.");
       }
@@ -276,4 +281,4 @@ export class StudyService {
   
       return { updatedStudy, modificationFile };
   }
-}
+}  
