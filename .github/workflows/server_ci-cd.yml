@@ -22,7 +22,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Push Server Docker Image to Registry
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO_SERVER }}:lasestv1 .
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO_SERVER }}:lasestv1 
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master # Consider using a specific version instead of master
@@ -31,6 +31,8 @@ jobs:
           username: root
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            echo "Starting SSH script execution..."
             cd pee/
             docker compose pull app
             docker compose up -d 
+            echo "test runner successfully "
