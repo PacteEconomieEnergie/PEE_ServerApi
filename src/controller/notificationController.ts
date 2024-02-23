@@ -31,8 +31,19 @@ export const getUserNotifications = async (req: Request, res: Response) => {
                  // Assuming the relation is correctly set up
                 study: {
                     include: {
-                        client: true, // Include client details of the study
-                        files: true, // Include files related to the study
+                        client: {
+                            select: {
+                                ClientName: true,
+                                
+                            }
+                        }, // Include client details of the study
+                        files: {
+                            select: {
+                                idFiles: true,
+                                
+                                // Add any other file fields you need
+                            }
+                        }, // Include files related to the study
                         // Include any other relations you need
                     },
                 },
@@ -56,8 +67,9 @@ export const getUserNotifications = async (req: Request, res: Response) => {
                 // Add any other study fields you want to include
             },
         })); 
+console.log(notifications[0].study?.client);
 
-        res.json(transformedNotifications);
+        res.json(notifications);
     } catch (error) {
         console.error('Error retrieving notifications:', error);
         res.status(500).json({ message: 'Failed to get notifications', error });
