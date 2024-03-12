@@ -20,7 +20,9 @@ model filehistory {
   FileContent        Bytes
   UploadDate         DateTime @db.DateTime(0)
   FileSize           BigInt
-  modificationNumber Int
+  Comment            String?   @db.LongText
+  createdAt          DateTime @default(now())
+  modificationNumber Int?
   modificationDate   DateTime @db.DateTime(0)
   Studies_IdStudies  Int
   Users_UserID       Int
@@ -95,11 +97,13 @@ model users {
   Token             String?              @db.LongText
   FullName          String?              @db.VarChar(255)
   PhoneNumber       String?              @db.VarChar(255)
-  Avatar            String?              @db.VarChar(255)
+  Avatar            String?              @db.LongText
   filehistory       filehistory[]
   createdStudies    studies[]           @relation("CreatedByUser")
   users_has_studies users_has_studies[]
   notifications     Notification[]
+   ResetPasswordCode   String?             @db.VarChar(255)
+  ResetPasswordExpire DateTime?
 }
 
 model users_has_studies {

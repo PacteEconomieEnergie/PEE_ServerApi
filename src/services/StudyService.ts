@@ -1,28 +1,33 @@
 import { prisma } from "../utils/prismaClient";
 import { UploadedFile } from "../interfaces/UploadedFile";
 import {StudiesStatus} from '../interfaces/StudiesStatus'
-import { NotificationService } from './NotificationService';
+ import { NotificationService } from './NotificationService';
 import { isTypeDeRetouche } from "../utils/typeGuards";
-import { io, users } from '../utils/socketManager';
+import { getIo, users } from '../utils/socketManager';
+import e from "express";
+// import { setupSocketIO } from '../utils/socketManager';
 export class StudyService {
-  private notificationService: NotificationService;
-  constructor() {
-    // Initialize NotificationService with the current io instance and the users map
-    this.notificationService = new NotificationService(io, users);
+  private get io() {
+    return getIo(); // This will call getIo() only when io is accessed
+    
   }
+  private notificationService = new NotificationService();
+  constructor() {
 
-      public async createStudy(studyData: any, file: UploadedFile, clientId: string, userId: string, createdById: string) {
+  }
+ 
+  public async createStudy(studyData: any, file: UploadedFile, clientId: string, userId: string, createdById: string) {
     if (!file) {
       throw new Error('File is missing');
     }
-
-    // Convert strings to numbers where necessary
+  
+    // Convert strings to numbers where necessary  
     const clientIdNum = parseInt(clientId, 10);
     const userIdNum = parseInt(userId, 10);
     const createdByIdNum = parseInt(createdById, 10);
-
-    const facturedInt = studyData.Factured === 'true' || studyData.Factured === true ? 1 : 0;
-
+  
+    const facturedInt = studyData.Factured === 'true' ? 1 : 0;
+  
     // Create the study
     const newStudy = await prisma.studies.create({
       data: {
@@ -52,13 +57,22 @@ export class StudyService {
         },
       },
     });
-
+    
+  
     // Notify the specified user about the new study
-    await this.notificationService.notifyNewStudy(userId, newStudy);
-
+    // const receiverSocketId = users.get(parseInt(userId, 10));
+    // if (receiverSocketId) {
+    //   console.log('Socket ID:', receiverSocketId);
+      
+    //   this.io.to(receiverSocketId).emit('newStudyCreated', {
+    //     studyId: newStudy.IdStudies,
+    //     message: "A new study has been created."
+    //   });
+    // }
+    await this.notificationService.notifyNewStudy(userIdNum, newStudy);
     return newStudy;
-      }
-
+  }
+  
       public async getAllStudies() {
         return await prisma.studies.findMany({
           include: {
@@ -133,7 +147,7 @@ export class StudyService {
         if (!file) {
             throw new Error('File is missing');
         }
-    
+      
         // Create a new file record and mark it as a synthèse file
         const syntheseFile = await prisma.files.create({
             data: {
@@ -146,20 +160,52 @@ export class StudyService {
                 Studies_IdStudies: studyId,
             },
         });
-    
+      
         // Optionally, update the study status to 'Done' or another appropriate status
         const updatedStudy = await prisma.studies.update({
             where: { IdStudies: studyId },
             data: { Status: 'Done' },
-            include: { createdByUser: true }, 
+            include: { createdByUser: {
+              select: {
+                UserID: true,
+                Email: true,
+              }
+            
+            }, 
+            client:{select:{
+              IdClient:true,
+              ClientName:true
+            
+            } },
+            users_has_studies: {
+              include: {
+                users:{
+                  select:{
+                  UserID:true,
+                  FullName:true,
+                  Email:true
+                
+                }}, // Include users details
+              }
+            }}, 
         });
-        
+      console.log(updatedStudy, "the updated study");
+      
         if (updatedStudy.createdByUser) {
-          await this.notificationService.notifyStudyStatusUpdate(updatedStudy.createdByUser.UserID.toString(), updatedStudy);
-      }
-
+          const creatorSocketId = users.get(updatedStudy.createdByUser.UserID);
+          if (creatorSocketId) {
+            this.io.to(creatorSocketId).emit('syntheseFileUploaded', {
+              studyId: updatedStudy.IdStudies,
+              status: updatedStudy.Status,
+            studyNature: updatedStudy.TypeEtude,
+            clientName: updatedStudy.client.ClientName,
+            uploadedBy: updatedStudy.users_has_studies[0].users.FullName||updatedStudy.users_has_studies[0].users.Email,
+            });
+          }
+        }
+      
         return { syntheseFile, updatedStudy };
-    }
+      }
     public async getEngineersStudies() {
       try {
         const engineers = await prisma.users.findMany({
@@ -180,7 +226,8 @@ export class StudyService {
             }
           }
         });
-  
+        console.log(engineers, "the engineers");
+        
         // Transform the fetched data to match the required structure
         const engineersData = engineers.map(engineer => {
           // Flatten the studies data structure
@@ -194,6 +241,7 @@ export class StudyService {
   
           return {
             id: engineer.UserID,
+            Email:engineer.Email,
             name: engineer.FullName || 'Unnamed Engineer',
             photo: engineer.Avatar || "/default/path/to/avatar.svg", // Adjust as necessary
             tasks: studies.map(study => ({ IdStudy: study.IdStudies, type: study.TypeEtude, Status: study.Status,client: {
@@ -218,30 +266,61 @@ export class StudyService {
       if (!Object.values(StudiesStatus).includes(status)) {
         throw new Error("Invalid status value.");
       }
-  
+    
       const updatedStudy = await prisma.studies.update({
         where: { IdStudies: studyId },
         data: { Status: status },
-        include: { createdByUser: true }
+        include: { createdByUser: {
+          select: {
+            UserID: true,
+            Email: true,
+          }
+        
+        },
+      client:{select:{
+        IdClient:true,
+        ClientName:true
+      
+      } },
+      users_has_studies: {
+        include: {
+          users:{
+            select:{
+            UserID:true,
+            FullName:true,
+            Email:true
+          
+          }}, // Include users details
+        }
+      } }
       });
-  
+    
       // If the study's creator is online, send a notification via Socket.IO
       if (updatedStudy.createdByUser) {
-        const creatorSocketId = users.get(updatedStudy.createdByUser.UserID.toString());
+        const creatorSocketId = users.get(updatedStudy.createdByUser.UserID);
         if (creatorSocketId) {
-          this.notificationService.notifyStudyStatusUpdate(updatedStudy.createdByUser.UserID.toString(), updatedStudy);
+          console.log(updatedStudy.users_has_studies[0].users, "the updated study");
+          
+          this.io.to(creatorSocketId).emit('studyStatusUpdate', {
+            studyId: updatedStudy.IdStudies,
+            status: updatedStudy.Status,
+            studyNature: updatedStudy.TypeEtude,
+            clientName: updatedStudy.client.ClientName,
+            uploadedBy: updatedStudy.users_has_studies[0].users.FullName||updatedStudy.users_has_studies[0].users.Email,
+            
+          });
         }
       }
-  
+    
       return updatedStudy;
     }
 
-    public async addModification(studyId: number, file: UploadedFile, userId: number, typeDeRetouche: string, additionalRetouch: number): Promise<any> {
+    public async addModification(studyId: number, file: UploadedFile, userId: number, typeDeRetouche: string, additionalRetouch: number, comment: string): Promise<any> {
       if (!file) {
           throw new Error('File is missing');
       }
       if (!isTypeDeRetouche(typeDeRetouche)) {
-        throw new Error('Invalid TypeDeRetouche value');
+        throw new Error('Invalid TypeDeRetouche value');  
     }
       // Fetch the current study to get the existing nombreDeRetouche
       const study = await prisma.studies.findUnique({
@@ -276,7 +355,8 @@ export class StudyService {
               modificationDate: new Date(),
               Studies_IdStudies: studyId,
               Users_UserID: userId,
-          },
+              Comment: comment,
+          },  
       });
   
       return { updatedStudy, modificationFile };
