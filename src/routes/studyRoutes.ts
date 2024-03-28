@@ -16,7 +16,8 @@ router.post('/add/:clientId/:userId/:createdById', uploadFile('pdfFile'), studyC
 router.get("/", studyController.getAllStudies);
 router.get('/engineers', studyController.getEngineersStudies);
 router.get('/:userId', studyController.getStudyById);
-router.patch("/:studyId",  uploadFile,studyController.uploadSyntheseFile);
+router.patch("/:studyId",  uploadFile('pdfFile'),studyController.uploadSyntheseFile);
 router.patch('/:studyId/status',studyController.updateStudyStatus)
 router.post('/:studyId/:userId', uploadFile, studyController.addModification);
 export default router;
+  

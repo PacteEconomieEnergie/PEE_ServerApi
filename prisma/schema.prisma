@@ -92,7 +92,7 @@ model Notification {
 model users {
   UserID            Int                 @id @unique(map: "UserID_UNIQUE") @default(autoincrement())
   Password          String              @db.LongText
- Email              String              @unique(map: "Email_UNIQUE") @db.VarChar(200) 
+  Email              String              @unique(map: "Email_UNIQUE") @db.VarChar(200) 
   Role              users_Role
   Token             String?              @db.LongText
   FullName          String?              @db.VarChar(255)
@@ -127,6 +127,7 @@ enum users_Role {
   ADMIN
   ASSISTANT
   ENGINEER
+  CLIENT
 }
 
 enum studies_TypeEtude {

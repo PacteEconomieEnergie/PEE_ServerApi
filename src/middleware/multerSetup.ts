@@ -5,8 +5,25 @@ const storage=multer.memoryStorage()
 
 
 const fileFilter = (req: Request, file: any, cb: multer.FileFilterCallback) => {
-  const allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
-  console.log(file);
+  if (!file) {
+    throw new Error('File is missing');
+}
+  const allowedMimeTypes = [
+    'application/pdf', 
+    'image/jpeg', 
+    'image/png', 
+    'image/gif',
+    'application/zip', 
+    'application/x-zip-compressed', 
+    'application/x-compressed', 
+    'multipart/x-zip', 
+    'application/x-rar-compressed', 
+    'application/octet-stream', 
+    'application/x-msdownload', 
+    'application/x-msdos-program' // This is for your specific case with RAR files
+  ];
+
+  console.log(req.file,'fromt the multer');
   
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true); // Accept file
@@ -17,10 +34,9 @@ const fileFilter = (req: Request, file: any, cb: multer.FileFilterCallback) => {
     }
   };
 
-  export const upload = multer({
-    storage: storage,
+  export const upload = multer({  
     limits: {
-      fileSize: 1024 * 1024 * 80, // 80MB
+      fileSize: 1024 * 1024 * 150, // 150MB
     },
     fileFilter: fileFilter,
   });
@@ -28,4 +44,4 @@ const fileFilter = (req: Request, file: any, cb: multer.FileFilterCallback) => {
 
   export const uploadFile = (fieldName: string): RequestHandler => {
     return upload.single(fieldName);
-  }; 
+  };   

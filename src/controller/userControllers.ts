@@ -3,7 +3,7 @@ import {PrismaClient, users} from "@prisma/client"
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
-import { sendPasswordResetEmailMiddleware } from "../middleware/nodemailer";
+import { sendPasswordResetEmailMiddleware,sendWelcomeEmail } from "../middleware/nodemailer";
 dotenv.config()
 const prisma=new PrismaClient();
 
@@ -40,7 +40,7 @@ async function addUser(req:Request,res:Response) {
             where: { UserID: newUser.UserID },
             data: { Token: token }
         });
-
+await sendWelcomeEmail(Email,Password)
         // Return the JWT token in the response
         res.json({ token });
     }catch(error:any){
@@ -78,9 +78,9 @@ if (bcrypt.compareSync(Password, user.Password)) {
             res.status(500).json({ error: 'An error occurred while processing your request', details: error.message });
         }
 }
-async function updatePassword(req: Request, res: Response) {
-    const {userId}=req.params
-    const {  oldPassword, newPassword } = req.body;
+async function updateUserSettings(req: Request, res: Response) {
+    const { userId } = req.params;
+    const { oldPassword, newPassword, name, phoneNumber } = req.body; // Include name and phoneNumber in the request body
     const numericUserId = Number(userId);
     if (isNaN(numericUserId)) {
         return res.status(400).json({ error: 'Invalid user ID' });
@@ -94,33 +94,34 @@ async function updatePassword(req: Request, res: Response) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        if (bcrypt.compareSync(oldPassword, user.Password)) {
+        const updates:any = {}; // Prepare an object to accumulate updates
+
+        // Update password if oldPassword and newPassword are provided
+        if (oldPassword && newPassword && bcrypt.compareSync(oldPassword, user.Password)) {
             const salt = bcrypt.genSaltSync(10);
             const hashedNewPassword = bcrypt.hashSync(newPassword, salt);
-
-            await prisma.users.update({
-                where: { UserID: numericUserId },
-                data: { Password: hashedNewPassword }
-            });
-
-            // Optional: Invalidate any existing sessions or tokens if necessary
-
-            // Re-authenticate the user by generating a new token
-            const token = jwt.sign(
-                { userId: user.UserID, Email: user.Email, role: user.Role },
-                process.env.JWT_SECRET as string,
-                { expiresIn: process.env.expiresIn }
-            );
-
-            // Return the new JWT token in the response
-            res.json({ token });
-        } else {
-            return res.status(401).json({ error: 'Old password is incorrect' });
+            updates.Password = hashedNewPassword; // Add hashed new password to updates
+        } else if (oldPassword || newPassword) {
+            return res.status(401).json({ error: 'Old password is incorrect or missing new password' });
         }
+
+        // Add name and phoneNumber to updates if they're provided
+        if (name) updates.FullName = name;
+        if (phoneNumber) updates.PhoneNumber = phoneNumber;  
+
+        await prisma.users.update({
+            where: { UserID: numericUserId },
+            data: updates // Update the database with accumulated updates
+        });
+
+        // You can include additional steps here, such as re-authentication or token invalidation if needed.
+
+        res.status(200).json({ message: 'User settings updated successfully' });
     } catch (error: any) {
-        res.status(500).json({ error: 'An error occurred while updating password', details: error.message });
+        res.status(500).json({ error: 'An error occurred while updating user settings', details: error.message });
     }
 }
+
 async function getUserByEmail(req: Request, res: Response) {
     const { Email } = req.params; // Assuming you're passing the email as a URL parameter
 
@@ -272,4 +273,4 @@ async function setNewPassword(req: Request, res: Response) {
 
 
 
-export{addUser,getAllUsers,login,getUserByEmail,getUserById,getAllEngineers,updatePassword,resetPassword,verifyResetCode,setNewPassword}
+export{addUser,getAllUsers,login,getUserByEmail,getUserById,getAllEngineers,updateUserSettings,resetPassword,verifyResetCode,setNewPassword}

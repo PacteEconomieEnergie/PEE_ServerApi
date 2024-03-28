@@ -4,7 +4,8 @@ import {StudiesStatus} from '../interfaces/StudiesStatus'
  import { NotificationService } from './NotificationService';
 import { isTypeDeRetouche } from "../utils/typeGuards";
 import { getIo, users } from '../utils/socketManager';
-import e from "express";
+import { log } from "console";
+
 // import { setupSocketIO } from '../utils/socketManager';
 export class StudyService {
   private get io() {
@@ -72,7 +73,76 @@ export class StudyService {
     await this.notificationService.notifyNewStudy(userIdNum, newStudy);
     return newStudy;
   }
+  public async uploadSyntheseFile(studyId: number, file: UploadedFile): Promise<any> {
+    if (!file) {
+        throw new Error('File is missing');
+    }
   
+    // Create a new file record and mark it as a synthèse file
+    const syntheseFile = await prisma.files.create({
+        data: {
+            FileName: file.originalname,
+            FileType: file.mimetype,
+            FileContent: file.buffer,
+            uploadDate: new Date(),
+            FileSize: file.size,
+            isSynthese: true,
+            Studies_IdStudies: studyId,
+        },
+    });
+  log(syntheseFile, "the synthese file");
+    // Optionally, update the study status to 'Done' or another appropriate status
+    const updatedStudy = await prisma.studies.update({
+        where: { IdStudies: studyId },
+        data: { Status: 'Done' },
+        include: { createdByUser: {
+          select: {
+            UserID: true,
+            Email: true,
+          }
+        
+        }, 
+        client:{select:{
+          IdClient:true,
+          ClientName:true
+        
+        } },
+        users_has_studies: {
+          include: {
+            users:{
+              select:{
+              UserID:true,
+              FullName:true,
+              Email:true
+            
+            }}, // Include users details
+          }
+        }}, 
+    });
+
+    console.log("it here now 1st if");
+    
+ 
+  
+    if (updatedStudy.createdByUser) {
+      console.log("the 2nd if ");
+      
+      const creatorSocketId = users.get(updatedStudy.createdByUser.UserID);
+      if (creatorSocketId) {
+        console.log("the 3rd if");
+        
+        this.io.to(creatorSocketId).emit('syntheseFileUploaded', {
+          studyId: updatedStudy.IdStudies,
+          status: updatedStudy.Status,
+        studyNature: updatedStudy.TypeEtude,
+        clientName: updatedStudy.client.ClientName,
+        uploadedBy: updatedStudy.users_has_studies[0].users.FullName||updatedStudy.users_has_studies[0].users.Email,
+        });
+      }
+    }
+  
+    return { syntheseFile, updatedStudy };
+  }
       public async getAllStudies() {
         return await prisma.studies.findMany({
           include: {
@@ -143,69 +213,7 @@ export class StudyService {
         }
       }
 
-      public async uploadSyntheseFile(studyId: number, file: UploadedFile): Promise<any> {
-        if (!file) {
-            throw new Error('File is missing');
-        }
       
-        // Create a new file record and mark it as a synthèse file
-        const syntheseFile = await prisma.files.create({
-            data: {
-                FileName: file.originalname,
-                FileType: file.mimetype,
-                FileContent: file.buffer,
-                uploadDate: new Date(),
-                FileSize: file.size,
-                isSynthese: true,
-                Studies_IdStudies: studyId,
-            },
-        });
-      
-        // Optionally, update the study status to 'Done' or another appropriate status
-        const updatedStudy = await prisma.studies.update({
-            where: { IdStudies: studyId },
-            data: { Status: 'Done' },
-            include: { createdByUser: {
-              select: {
-                UserID: true,
-                Email: true,
-              }
-            
-            }, 
-            client:{select:{
-              IdClient:true,
-              ClientName:true
-            
-            } },
-            users_has_studies: {
-              include: {
-                users:{
-                  select:{
-                  UserID:true,
-                  FullName:true,
-                  Email:true
-                
-                }}, // Include users details
-              }
-            }}, 
-        });
-      console.log(updatedStudy, "the updated study");
-      
-        if (updatedStudy.createdByUser) {
-          const creatorSocketId = users.get(updatedStudy.createdByUser.UserID);
-          if (creatorSocketId) {
-            this.io.to(creatorSocketId).emit('syntheseFileUploaded', {
-              studyId: updatedStudy.IdStudies,
-              status: updatedStudy.Status,
-            studyNature: updatedStudy.TypeEtude,
-            clientName: updatedStudy.client.ClientName,
-            uploadedBy: updatedStudy.users_has_studies[0].users.FullName||updatedStudy.users_has_studies[0].users.Email,
-            });
-          }
-        }
-      
-        return { syntheseFile, updatedStudy };
-      }
     public async getEngineersStudies() {
       try {
         const engineers = await prisma.users.findMany({
@@ -226,7 +234,7 @@ export class StudyService {
             }
           }
         });
-        console.log(engineers, "the engineers");
+      
         
         // Transform the fetched data to match the required structure
         const engineersData = engineers.map(engineer => {
