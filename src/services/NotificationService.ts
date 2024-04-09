@@ -1,27 +1,34 @@
 // src/services/NotificationService.ts
 import { prisma } from "../utils/prismaClient";
 import { Server } from "socket.io";
-
+import { getIo, users } from "../utils/socketManager"; 
 export class NotificationService {
-  private io: Server;
-  private users: Map<string, string>;
-
-  constructor(io: Server, users: Map<string, string>) {
-    this.io = io;
-    this.users = users;
+  private get io() {
+    return getIo(); // This will call getIo() only when io is accessed
   }
 
-  public async notifyNewStudy(userId: string, study: any) {
-    const socketId = this.users.get(userId);
+  constructor() {
+   
+  }
+
+  public async notifyNewStudy(userId: number, study: any) {
+    const socketId = users.get(userId);
+    console.log("here it is");
+    
     if (socketId) {
+      console.log('Socket ID:');
+    
       this.io.to(socketId).emit('newStudyCreated', {
         message: 'A new study has been created.',
         studyDetails: {
           id: study.IdStudies, // Assuming this is the ID field
           title: study.Title, // Example detail
-          // Add other relevant study details here
+          // Add other relevant study details here  
         },
-      });
+      });  
+    }else {
+      // Create a notification record if the user is not online
+      await this.createNotification(userId, study.IdStudies);
     }
   };
   public async sendUnseenNotifications(userId: number) {
@@ -32,7 +39,7 @@ export class NotificationService {
 
     notifications.forEach(async (notification) => {
       if (notification.study) {
-        const socketId = this.users.get(userId.toString());
+        const socketId = users.get(userId);
         if (socketId) {
           this.io.to(socketId).emit('newStudyNotification', { notificationId: notification.id, study: notification.study });
           await prisma.notification.update({
@@ -43,8 +50,8 @@ export class NotificationService {
       }
     });
   }
-  public async notifyStudyStatusUpdate(userId: string, study: any) {
-    const socketId = this.users.get(userId);
+  public async notifyStudyStatusUpdate(userId: number, study: any) {
+    const socketId = users.get(userId);
     if (socketId) {
       // Emitting an event for study status update
       this.io.to(socketId).emit('studyStatusUpdated', {
@@ -53,15 +60,49 @@ export class NotificationService {
         newStatus: study.Status,
         // Include any other relevant study details you want to send
       });
+    }else {
+      // Create a notification record if the user is not online
+      await this.createNotification(userId, study.IdStudies);
     }
   }
   public removeUser(socketId: string) {
-    for (let [userId, userSocketId] of this.users.entries()) {
+    for (let [userId, userSocketId] of users.entries()) {
       if (socketId === userSocketId) {
-        this.users.delete(userId);
+        users.delete(userId);
         console.log(`Removed user ${userId} from users map.`);
         break;
       }
     }
+  }
+  public async createNotification(userId: number, studyId: number) {
+    return prisma.notification.create({
+      data: {
+        userId,
+        studyId,
+        seen: false, // Default value
+      },
+    });
+  }
+
+  public async getNotificationsForUser(userId: number) {
+    return prisma.notification.findMany({
+      where: { userId },
+      include: {
+        study: true, // Adjust according to your actual relations
+      },
+    });
+  }
+
+  public async markNotificationAsSeen(id: number) {
+    return prisma.notification.update({
+      where: { id },
+      data: { seen: true },
+    });
+  }
+
+  public async deleteNotification(id: number) {
+    return prisma.notification.delete({
+      where: { id },
+    });
   }
 }

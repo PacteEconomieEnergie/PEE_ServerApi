@@ -24,7 +24,7 @@ export class StudyManagementController {
         res.status(201).json(newStudy);
       } catch (error) {
         if (error instanceof Error) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ messagessss: error.message });
           } else {
             // If the error is not an Error instance, handle it as an unknown error
             res.status(500).json({ message: 'An unknown error occurred' });
@@ -105,7 +105,7 @@ export class StudyManagementController {
     const { studyId } = req.params;
     const { Status } = req.body;
  // Assuming you have middleware to set userId from token
-console.log(req.body,"the body");
+
 
     try {
       const updatedStudy = await this.studyService.updateStudyStatus(parseInt(studyId), Status as StudiesStatus);
@@ -121,7 +121,7 @@ console.log(req.body,"the body");
   public addModification = async (req: Request, res: Response): Promise<void> => {
     const { studyId, userId } = req.params;
     const file = req.file as UploadedFile; // Assuming multer setup correctly adds the file
-    const { TypeDeRetouche, additionalRetouch } = req.body; // Parse additionalRetouch from the request body
+    const { TypeDeRetouche, additionalRetouch,comment } = req.body; // Parse additionalRetouch from the request body
 
     try {
         const result = await this.studyService.addModification( 
@@ -129,7 +129,8 @@ console.log(req.body,"the body");
             file,
             parseInt(userId),
             TypeDeRetouche,
-            parseInt(additionalRetouch) // Ensure this is a number
+            parseInt(additionalRetouch),
+             comment
         );
         res.json('cretaed');
     } catch (error) {

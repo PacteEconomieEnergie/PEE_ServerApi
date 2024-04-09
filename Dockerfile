@@ -36,14 +36,14 @@ COPY --from=builder /app/prisma ./prisma/
 COPY --from=builder /app/node_modules ./node_modules
 
 # Copy the generated JavaScript files
-COPY --from=builder /app/src ./src
+COPY --from=builder /app/dist ./dist
 
-# Copy the entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+
 
 # Expose the port the app runs on
 EXPOSE 3002
 
 # Define the command to start the app using the compiled JavaScript
-ENTRYPOINT ["/entrypoint.sh"]
+# Here we use the shell form of CMD to run a shell command that will
+# first run Prisma migrations and then start your Node.js application
+CMD npx prisma migrate deploy && node dist/index.js

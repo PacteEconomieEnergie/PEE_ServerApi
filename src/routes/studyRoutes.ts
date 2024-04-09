@@ -8,7 +8,7 @@ const router = express.Router();
 const studyController = new StudyManagementController();
 
 // Applying the file upload middleware to routes that require file processing
-router.post('/add/:clientId/:userId/:createdById', uploadFile, studyController.addStudy);
+router.post('/add/:clientId/:userId/:createdById', uploadFile('pdfFile'), studyController.addStudy);
 // router.post('/:studyId/uploadSyntheseFile', uploadFile, (req, res) => studyController.uploadSyntheseFile(req, res));
 
 // Other routes do not need file processing, so they are not using the uploadFile middleware
@@ -16,7 +16,8 @@ router.post('/add/:clientId/:userId/:createdById', uploadFile, studyController.a
 router.get("/", studyController.getAllStudies);
 router.get('/engineers', studyController.getEngineersStudies);
 router.get('/:userId', studyController.getStudyById);
-router.patch("/:studyId",  uploadFile,studyController.uploadSyntheseFile);
+router.patch("/:studyId",  uploadFile('pdfFile'),studyController.uploadSyntheseFile);
 router.patch('/:studyId/status',studyController.updateStudyStatus)
 router.post('/:studyId/:userId', uploadFile, studyController.addModification);
 export default router;
+  
