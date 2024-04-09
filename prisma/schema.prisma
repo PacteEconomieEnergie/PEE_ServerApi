@@ -43,10 +43,13 @@ model files {
   FileSize          BigInt
   isSynthese        Boolean       @default(false)
   Studies_IdStudies Int
+  UtilisateursId    Int? 
   studies           studies       @relation(fields: [Studies_IdStudies], references: [IdStudies], onDelete: NoAction, onUpdate: NoAction, map: "fk_Files_Studies1")
+  utilisateur       utilisateurs? @relation("UserFiles", fields: [UtilisateursId], references: [id]) 
 
   @@id([idFiles, Studies_IdStudies])
   @@index([Studies_IdStudies], map: "fk_Files_Studies1_idx")
+  @@index([UtilisateursId], name: "idx_files_utilisateursId")
 }
 
 model studies {
@@ -102,8 +105,26 @@ model users {
   createdStudies    studies[]           @relation("CreatedByUser")
   users_has_studies users_has_studies[]
   notifications     Notification[]
-   ResetPasswordCode   String?             @db.VarChar(255)
+  ResetPasswordCode   String?             @db.VarChar(255)
   ResetPasswordExpire DateTime?
+}
+model utilisateurs {
+  id                 Int      @id @default(autoincrement())
+  nom                String   @db.VarChar(255) @unique
+  prenom             String   @db.VarChar(255) @unique
+  adresse            String   @db.VarChar(255)
+  codePostal         String   @db.VarChar(255)
+  ville              String   @db.VarChar(255)
+  telephone          String   @db.VarChar(255)
+  mail               String   @db.VarChar(255) @unique
+  surfaceHabitable   Int
+  typeDeChauffage    String   @db.VarChar(255)
+  typeMaison         String   @db.VarChar(255)
+  anneeDeConstruction Int
+  numeroFiscal       String   @db.VarChar(255)
+  refFiscale         String   @db.VarChar(255)
+  pieceJointe       files[]  @relation("UserFiles")
+  @@index([mail], name: "idx_utilisateurs_mail")
 }
 
 model users_has_studies {
