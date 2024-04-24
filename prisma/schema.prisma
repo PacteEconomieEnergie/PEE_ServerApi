@@ -38,16 +38,17 @@ model files {
   idFiles           Int           @unique(map: "idFiles_UNIQUE") @default(autoincrement()) 
   FileName          String        @db.VarChar(255)
   FileType          String        @db.VarChar(255)
+  Type              files_Type?
   FileContent       Bytes
   uploadDate        DateTime      @db.DateTime(0)
   FileSize          BigInt
   isSynthese        Boolean       @default(false)
-  Studies_IdStudies Int
+  Studies_IdStudies Int?
   UtilisateursId    Int? 
-  studies           studies       @relation(fields: [Studies_IdStudies], references: [IdStudies], onDelete: NoAction, onUpdate: NoAction, map: "fk_Files_Studies1")
-  utilisateur       utilisateurs? @relation("UserFiles", fields: [UtilisateursId], references: [id]) 
+  studies           studies?       @relation(fields: [Studies_IdStudies], references: [IdStudies], onDelete: NoAction, onUpdate: NoAction, map: "fk_Files_Studies1")
+  utilisateur       Lead? @relation("UserFiles", fields: [UtilisateursId], references: [id]) 
 
-  @@id([idFiles, Studies_IdStudies])
+  
   @@index([Studies_IdStudies], map: "fk_Files_Studies1_idx")
   @@index([UtilisateursId], name: "idx_files_utilisateursId")
 }
@@ -66,6 +67,7 @@ model studies {
   TypeDeRetouche    studies_TypeDeRetouche?
   Category          studies_Category
   Nature            studies_Nature
+  Comment           String?                  @db.VarChar(255)
   files             files[]
   filehistory       filehistory[]
   notifications     Notification[]
@@ -108,7 +110,7 @@ model users {
   ResetPasswordCode   String?             @db.VarChar(255)
   ResetPasswordExpire DateTime?
 }
-model utilisateurs {
+model Lead {
   id                 Int      @id @default(autoincrement())
   nom                String   @db.VarChar(255) @unique
   prenom             String   @db.VarChar(255) @unique
@@ -117,10 +119,10 @@ model utilisateurs {
   ville              String   @db.VarChar(255)
   telephone          String   @db.VarChar(255)
   mail               String   @db.VarChar(255) @unique
-  surfaceHabitable   Int
+  surfaceHabitable   String
   typeDeChauffage    String   @db.VarChar(255)
   typeMaison         String   @db.VarChar(255)
-  anneeDeConstruction Int
+  anneeDeConstruction String
   numeroFiscal       String   @db.VarChar(255)
   refFiscale         String   @db.VarChar(255)
   pieceJointe       files[]  @relation("UserFiles")
@@ -143,7 +145,13 @@ enum studies_Status {
   Done
   ManqueInformation 
 }
-
+enum files_Type {
+  FicheNavette
+  FichePreco
+  Synthese
+  PieceJointe
+  
+}
 enum users_Role {
   ADMIN
   ASSISTANT

@@ -21,7 +21,7 @@ export class StudyService {
     if (!file) {
       throw new Error('File is missing');
     }
-  
+   
     // Convert strings to numbers where necessary  
     const clientIdNum = parseInt(clientId, 10);
     const userIdNum = parseInt(userId, 10);
@@ -148,7 +148,8 @@ export class StudyService {
           include: {
             files:{select:{
                 idFiles:true,
-                isSynthese:true
+                isSynthese:true,
+                FileType:true
             }},
             client: true,
             createdByUser: {

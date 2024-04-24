@@ -22,6 +22,7 @@ const fileFilter = (req: Request, file: any, cb: multer.FileFilterCallback) => {
     'application/x-msdownload', 
     'application/x-msdos-program' // This is for your specific case with RAR files
   ];
+console.log(file,'the file');
 
   console.log(req.file,'fromt the multer');
   

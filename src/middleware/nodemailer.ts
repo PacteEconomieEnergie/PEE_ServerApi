@@ -8,7 +8,7 @@ const smtpConfig = {
     secure: false, // True for 465 (SSL), false for other ports like 587 (TLS/STARTTLS)
     auth: {
         user: 'contact@pe-e.fr', // Your email address
-        pass: 'Toor270687', // Your email password or app-specific password
+        pass: 'AzertyES@2024', // Your email password or app-specific password
     },
     tls: {
         rejectUnauthorized: false // Bypasses the certificate validation

@@ -20,4 +20,4 @@ router.patch("/:studyId",  uploadFile('pdfFile'),studyController.uploadSyntheseF
 router.patch('/:studyId/status',studyController.updateStudyStatus)
 router.post('/:studyId/:userId', uploadFile, studyController.addModification);
 export default router;
-  
+    

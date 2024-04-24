@@ -6,7 +6,7 @@ const userValidationRules = () => {
     return [
         body('Email').isEmail().withMessage('Invalid email format'),
         body('Password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
-        body('Role').isIn(['ADMIN', 'ENGINEER','ASSISTANT']).withMessage('Invalid role specified')
+        body('Role').isIn(['ADMIN', 'ENGINEER','ASSISTANT',"CLIENT"]).withMessage('Invalid role specified')
     ];
 };
 

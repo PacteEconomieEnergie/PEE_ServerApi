@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient,files_Type } from "@prisma/client";
 const prisma=new PrismaClient
 
-export {prisma}
+export {prisma,files_Type}
